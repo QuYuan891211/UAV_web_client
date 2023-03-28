@@ -3,8 +3,17 @@
         <div v-for="(item, index) in menus" :key="index" @click="selectMenu(index)">
                 <div class="menus-item" >
                 <div class="map-button">{{ item.title }}</div>
+                            <!-- 图层切换组件 -->
+
                 </div>
         </div>
+                <div id="layer-tool" >
+                    <!-- <div id="mouse-position" ></div> -->
+                    <div id="layerControl" class="layerControl">
+                        <div class="title"><label>图层列表</label></div>
+                        <ul id="layerTree" class="layerTree"></ul>
+                    </div>
+                </div>
         
         <!-- <div class="map-button" id="panto" @click="moveToChinaSea()"></button> -->
     </div>
@@ -29,6 +38,7 @@ export default {
                 { title: '地图复位' },
 
             ],
+
             url_load_config : 'http://' + baseurl + ':8085/config/all',
             map: null,
             point_icon_style_path:'./static/images/label/icon32.png',
@@ -52,9 +62,77 @@ export default {
         // this.initBuoyData();
         this.initMap();
         this.initMarker();
+        //加载图层列表数据
+        this.loadLayersControl(this.map, "layerTree");
         
     },
     methods: {
+           /**
+        * 加载图层列表数据
+        * @param {ol.Map} map 地图对象
+        * @param {string} id 图层列表容器ID
+        */
+         loadLayersControl(map, id) {
+            var layer = new Array(); //map中的图层数组
+            var layerName = new Array();  //图层名称数组
+            var layerVisibility = new Array(); //图层可见属性数组
+            // alert(map.getLayers())
+            var treeContent = document.getElementById(id); //图层目录容器
+
+            var layers = map.getLayers(); //获取地图中所有图层
+            for (var i = 0; i < layers.getLength(); i++) {
+                //获取每个图层的名称、是否可见属性
+                layer[i] = layers.item(i);
+                layerName[i] = layer[i].get('name');
+                layerVisibility[i] = layer[i].getVisible();
+
+                //新增li元素，用来承载图层项
+                var elementLi = document.createElement('li');
+                treeContent.appendChild(elementLi); // 添加子节点
+                //创建复选框元素
+                var elementInput = document.createElement('input');
+                elementInput.type = "checkbox";
+                elementInput.name = "layers";
+                elementLi.appendChild(elementInput);
+                //创建label元素
+                var elementLable = document.createElement('label');
+                elementLable.className = "layer";
+                //设置图层名称
+                this.setInnerText(elementLable, layerName[i]);
+                elementLi.appendChild(elementLable);
+
+                //设置图层默认显示状态
+                if (layerVisibility[i]) {
+                    elementInput.checked = true;
+                }
+                this.addChangeEvent(elementInput, layer[i]);  //为checkbox添加变更事件                                         
+            }
+        },
+                /**
+        * 为checkbox元素绑定变更事件
+        * @param {input} element checkbox元素
+        * @param {ol.layer.Layer} layer 图层对象
+        */
+        addChangeEvent(element, layer) {
+            element.onclick = function () {
+                if (element.checked) {
+                    layer.setVisible(true); //显示图层
+                }
+                else {
+                    layer.setVisible(false); //不显示图层
+                }
+            };
+        },
+                /**
+        * 动态设置元素文本内容（兼容）
+        */
+        setInnerText(element, text) {
+            if (typeof element.textContent == "string") {
+                element.textContent = text;
+            } else {
+                element.innerText = text;
+            }
+        },
         /**
             * 创建矢量标注样式函数,设置image为图标ol.style.Icon
             * @param {ol.Feature} feature 要素
@@ -262,27 +340,27 @@ export default {
 
         },
         initMap() {
-            // var TiandiMap_vec = new ol.layer.Tile({
-            //     name: "天地图矢量图层",
-            //     source: new ol.source.XYZ({
-            //         url: "http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
-            //         wrapX: false
-            //     }),
-            //     preload:Infinity
-            // });
-            // var TiandiMap_cva = new ol.layer.Tile({
-            //     name: "天地图矢量注记图层",
-            //     source: new ol.source.XYZ({
-            //         url: "http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
-            //         wrapX: false
-            //     }),
-            //     preload:Infinity
-            // });
+            var TiandiMap_vec = new ol.layer.Tile({
+                name: "天地图矢量图层",
+                source: new ol.source.XYZ({
+                    url: "http://t0.tianditu.com/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
+                    wrapX: false
+                }),
+                preload:Infinity
+            });
+            var TiandiMap_cva = new ol.layer.Tile({
+                name: "天地图矢量注记图层",
+                source: new ol.source.XYZ({
+                    url: "http://t0.tianditu.com/DataServer?T=cva_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
+                    wrapX: false
+                }),
+                preload:Infinity
+            });
             var TiandiMap_img = new ol.layer.Tile({
                 name: "天地图影像图层",
                 source: new ol.source.XYZ({
-                    // url: "http://t0.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
-                    url:"http://128.5.7.127:8082/geoserver/observer/wms",
+                    url: "http://t0.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
+                    // url:"http://128.5.7.127:8082/geoserver/observer/wms",
                     params:{
                         LAYERS:"observer:geotools_coverage"
                     },
@@ -319,10 +397,14 @@ export default {
             this.map = new ol.Map({
                 //地图容器div的ID
                 target: 'olMap',
-                layers: [GaodeMap_img],
+                // layers: [GaodeMap_img],
                 // layers: [TiandiMap_img],
                 //地图容器中加载的图层:加载影像图
-                layers: [TiandiMap_img, TiandiMap_cia],
+                // layers: [TiandiMap_img, TiandiMap_cia],
+                layers: [
+                    TiandiMap_img, 
+                    TiandiMap_cia
+                ],
                 //地图容器中加载的图层:加载矢量图层
                 // layers: [TiandiMap_vec, TiandiMap_cva],
                 //地图视图设置
@@ -423,16 +505,17 @@ export default {
     position: absolute;
     /* left:0; */
     top: 100px;
-    z-index: 5;
+    z-index: 2001;
     /* pointer-events: none; */
 }
 .left-tool-bar .menus-item {
     width: 144px;
-    height: 49px;
+    height: 200px;
     font-size: 18px;
     line-height: 55px;
     margin-bottom: 49px;
     cursor: pointer;
+
 }
 .left-tool-bar .map-button {
     background: url(@/assets/no-select.png);
@@ -463,5 +546,63 @@ export default {
         font-weight: 900;  
         font-size:125%  
 }
+
+        #layer-tool{
+            border:none;padding:0;margin:0;
+            font-size:14px;
+            font-family:"微软雅黑";
+            text-align: left;
+            margin-top: 2%;
+            width:100%;
+            height:100%;
+            position:absolute;
+            
+        }
+        /* 图层控件层样式设置 */
+        .layerControl{
+            position:absolute;
+            bottom:5px;
+            min-width:200px;
+            max-height:200px; 
+            left:0px;  
+            top:2%;    
+            z-index:2001;   /*在地图容器中的层，要设置z-index的值让其显示在地图上层*/
+            color:#ffffff;
+            background-color:#4c4e5a;
+            border-width: 10px; /*边缘的宽度*/
+            border-radius: 10px;    /*圆角的大小 */ 
+            border-color: #000 #000 #000 #000;  /*边框颜色*/
+        }
+        .layerControl .title
+        {
+            font-weight:bold;
+            font-size:15px;
+            margin:10px;
+        }
+        .layerTree{
+            list-style-position: outside;
+        }
+        ul{
+            border:none;padding:0;margin:0;
+            font-size:14px;
+            font-family:"微软雅黑";
+			list-style: none;
+		}
+        .layerTree li
+        {
+            
+             /* list-style:none; */
+             margin:200px; 
+             /* text-align:left; */
+        }
+        /* 鼠标位置控件层样式设置 */
+        #mouse-position{
+            float:left;
+            position:absolute;
+            bottom:5px;
+            width:200px;
+            height:20px;         
+            z-index:2000;   /*在地图容器中的层，要设置z-index的值让其显示在地图上层*/
+        }
 
 </style>

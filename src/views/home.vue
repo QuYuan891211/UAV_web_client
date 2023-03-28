@@ -4,8 +4,8 @@
         <centerHeader1 />
 
         <!-- 左侧菜单模块 -->
-        <menu1 :showSign="active" ></menu1>
-
+        <!-- <menu1 :showSign="active" ></menu1> -->
+        <!-- <layerControl :key = "timer" ></layerControl> -->
         <!-- 总概览模块 -->
         <div v-show="active === 0" class="right-bar" :class="active === 0 ? 'fromRight' : ''"
             :style="{ right: rightbarRight + '%', height: (curHeight-100) + 'px'}">
@@ -67,6 +67,7 @@ import rightcontentClient3 from '../components/subcontent/rightcontentClient3.vu
 import rightcontentClient4 from '../components/subcontent/rightcontentClient4.vue'
 import rightcontentClient5 from '../components/subcontent/rightcontentClient5.vue'
 import menu1 from '../components//menu/menu1.vue'
+// import layerControl from '../components//menu/layerControl.vue'
 // import { Console } from 'console'
 export default {
     components: {
