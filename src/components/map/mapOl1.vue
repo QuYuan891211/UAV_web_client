@@ -14,6 +14,13 @@
                         <ul id="layerTree" class="layerTree"></ul>
                     </div>
                 </div>
+                <!-- 鹰眼控件 -->
+                <div id="overview-map" ></div>
+                <!-- 鼠标位置控件 -->
+                <div id="mouse-tool" >
+                    <div id="mouse-position" ></div>          
+                                                
+                </div>
         
         <!-- <div class="map-button" id="panto" @click="moveToChinaSea()"></button> -->
     </div>
@@ -27,6 +34,7 @@ import { tsThisType } from '@babel/types';
 // import { ol } from 'dist/static/libs/ol5/ol';
 import bus from '../../utils'
 import {baseurl} from '../../assets/js/common_data'
+import {mousePositionControl} from '../../assets/js/map_control_tool'
 // import MousePosition from "ol/control/MousePosition";
 // import { format } from "ol/coordinate";
 
@@ -395,18 +403,24 @@ export default {
 
             //实例化Map对象加载地图
             this.map = new ol.Map({
+
                 //地图容器div的ID
                 target: 'olMap',
+
                 // layers: [GaodeMap_img],
                 // layers: [TiandiMap_img],
                 //地图容器中加载的图层:加载影像图
                 // layers: [TiandiMap_img, TiandiMap_cia],
+
+                //图层
                 layers: [
                     TiandiMap_img, 
                     TiandiMap_cia
                 ],
+
                 //地图容器中加载的图层:加载矢量图层
                 // layers: [TiandiMap_vec, TiandiMap_cva],
+
                 //地图视图设置
                 view: new ol.View({
                     //地图初始中心点
@@ -415,46 +429,52 @@ export default {
                     zoom: 5,
                     minZoom:4,
                     maxZoom:9
-
-
                 }),
+                
 
 
             });
 
 
 
-            // //鹰眼控件
-            // var overviewMapControl = new ol.control.OverviewMap({
-            //     layers: [
-            //         new new ol.layer.Tile({
-            //         source: new ol.source.XYZ({
-            //         url: "http://t0.tianditu.com/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=cd7516c53e2e5bee9bad989b63db6ce4",
-            //         wrapX: false
-            //     })
-            //         })
-            //     ]
-            // });
 
-           
-            //比例尺控件
+           //1. 添加地图组件
+            //1.1 比例尺控件
             this.map.addControl(new ol.control.ScaleLine());
-             //鼠标坐标控件
+
+             //1.2 鼠标坐标控件
             var mousePositionControl = new ol.control.MousePosition({
             //坐标格式
-            coordinateFormat: function (coordinate) {
-                return ol.coordinate.format(coordinate, "经度:{x} &nbsp; 纬度:{y}", 2);
-            },
-            //地图投影坐标系（若未设置则输出为默认投影坐标系下的坐标）
-            projection: "EPSG:4326",
-            //坐标信息显示样式类名,默认是'ol-mouse-position'
-            className: "custom-mouse-position",
-            //显示鼠标位置信息的目标容器
-            target: document.getElementById("mouse-position"),
-            //未定义坐标的标记
-            undefinedHTML: "&nbsp;",
-        });
+                coordinateFormat: function (coordinate) {
+                    return ol.coordinate.format(coordinate, "经度:{x} &nbsp; 纬度:{y}", 2);
+                },
+                //地图投影坐标系（若未设置则输出为默认投影坐标系下的坐标）
+                projection: "EPSG:4326",
+                //坐标信息显示样式类名,默认是'ol-mouse-position'
+                className: "custom-mouse-position",
+                //显示鼠标位置信息的目标容器
+                target: document.getElementById("mouse-position"),
+                //未定义坐标的标记
+                undefinedHTML: "&nbsp;",
+            });
             this.map.addControl(mousePositionControl);
+           //1.3 鹰眼控件
+            //实例化鹰眼控件（OverviewMap）,自定义样式的鹰眼控件  
+            var overviewMapControl = new ol.control.OverviewMap({
+                className: 'ol-overviewmap ol-custom-overviewmap', //鹰眼控件样式（see in overviewmap-custom.html to see the custom CSS used）
+                //鹰眼中加载同坐标系下不同数据源的图层
+                layers: [ 
+                    TiandiMap_img
+                ],
+                collapseLabel: '\u00BB', //鹰眼控件展开时功能按钮上的标识（网页的JS的字符编码）
+                label: '\u00AB', //鹰眼控件折叠时功能按钮上的标识（网页的JS的字符编码）
+                collapsed: false //初始为展开显示方式
+            });
+            // this.map.addControl(overviewMapControl);
+            //1.4 地图全屏控件
+            // this.map.addControl(new ol.control.FullScreen());
+
+
             var view = this.map.getView()
             var zoom = view.getZoom()
             var center = view.getCenter()
@@ -510,7 +530,7 @@ export default {
 }
 .left-tool-bar .menus-item {
     width: 144px;
-    height: 200px;
+    height: 30px;
     font-size: 18px;
     line-height: 55px;
     margin-bottom: 49px;
@@ -548,6 +568,7 @@ export default {
 }
 
         #layer-tool{
+            margin-top: 10px;
             border:none;padding:0;margin:0;
             font-size:14px;
             font-family:"微软雅黑";
@@ -595,8 +616,16 @@ export default {
              margin:200px; 
              /* text-align:left; */
         }
-        /* 鼠标位置控件层样式设置 */
-        #mouse-position{
+
+        #mouse-tool{
+            margin-top: 10%;
+            width:100%;
+            height:100%;
+            position:absolute;
+        }
+         /* 鼠标位置控件层样式设置 */
+         #mouse-position{
+            color: white;
             float:left;
             position:absolute;
             bottom:5px;
@@ -604,5 +633,43 @@ export default {
             height:20px;         
             z-index:2000;   /*在地图容器中的层，要设置z-index的值让其显示在地图上层*/
         }
+        /* 鼠标位置信息自定义样式设置 */
+        .custom-mouse-position{
+            color:Red;
+            font-size:50px;
+            font-family:"微软雅黑";
+        }
 
+        #overview-map{
+            margin-top: 10%;
+            width:100%;
+            height:100px;
+        }
+        /*=S 自定义鹰眼样式 */
+        .ol-custom-overviewmap,.ol-custom-overviewmap.ol-uncollapsible {
+            bottom: auto;
+            left: auto;
+            right: 0; /* 右侧显示 */
+            top: 0;  /* 顶部显示 */
+        }
+        /* 鹰眼控件展开时控件外框的样式 */
+        .ol-custom-overviewmap:not(.ol-collapsed)  {
+            border: 1px solid black;
+        }
+         /* 鹰眼控件中地图容器样式 */
+        .ol-custom-overviewmap .ol-overviewmap-map {
+            border: none;
+            width: 300px;
+        }
+        /* 鹰眼控件中显示当前窗口中主图区域的边框 */
+        .ol-custom-overviewmap .ol-overviewmap-box {
+            border: 2px solid red;
+        }
+        /* 鹰眼控件展开时其控件按钮图标的样式 */
+        .ol-custom-overviewmap:not(.ol-collapsed) button{
+            bottom: auto;
+            left: auto;
+            right: 1px;
+            top: 1px;
+        }
 </style>
